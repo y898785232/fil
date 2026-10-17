@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Filecoin Drive</title>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --card: #ffffff;
+      --text: #1f2328;
+      --muted: #656d76;
+      --border: #e6e8eb;
+      --primary: #e11d48;
+      --primary-hover: #be123c;
+      --success-bg: #ecfdf5;
+      --success-text: #065f46;
+      --error-bg: #fef2f2;
+      --error-text: #991b1b;
+      --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 20px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #e11d48, #fb7185);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-size: 18px;
+      box-shadow: 0 6px 16px rgba(225, 29, 72, 0.25);
+    }
+
+    .network-badge {
+      font-size: 12px;
+      color: var(--muted);
+      background: white;
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .card h2 {
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .card .desc {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .upload-box {
+      border: 2px dashed #d7dbe0;
+      border-radius: 16px;
+      background: #fafbfc;
+      padding: 28px 20px;
+      text-align: center;
+      transition: 0.2s ease;
+    }
+
+    .upload-box.dragover {
+      border-color: var(--primary);
+      background: #fff1f2;
+    }
+
+    .upload-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 12px;
+      border-radius: 16px;
+      background: #fff1f2;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+    }
+
+    .upload-box p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+
+    input[type="file"] {
+      display: block;
+      margin: 0 auto;
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .btn-primary {
+      flex: 1;
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-primary:disabled {
+      background: #f9a8b4;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    #status {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #f8fafc;
+      font-size: 14px;
+      line-height: 1.6;
+      word-break: break-all;
+      min-height: 54px;
+      color: var(--muted);
+    }
+
+    #status.success {
+      background: var(--success-bg);
+      color: var(--success-text);
+    }
+
+    #status.error {
+      background: var(--error-bg);
+      color: var(--error-text);
+    }
+
+    #status.loading {
+      color: #be123c;
+    }
+
+    .history-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 520px;
+      overflow: auto;
+    }
+
+    .item {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fcfcfd;
+    }
+
+    .item .name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .item .meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .item .cid {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #334155;
+      word-break: break-all;
+      margin-bottom: 10px;
+    }
+
+    .item .links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .item a {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .item a:hover { text-decoration: underline; }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 28px 10px;
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">F</div>
+        <div>Filecoin Drive</div>
+      </div>
+      <div class="network-badge">Calibration Testnet</div>
+    </div>
+
+    <div class="grid">
+      <!-- 上传区 -->
+      <div class="card">
+        <h2>上传到 Filecoin</h2>
+        <p class="desc">支持照片和视频，文件将存储到 Filecoin Onchain Cloud</p>
+
+        <div class="upload-box" id="dropZone">
+          <div class="upload-icon">📁</div>
+          <p>拖拽文件到这里，或点击下方选择</p>
+          <input type="file" id="fileInput" accept="image/*,video/*" />
+        </div>
+
+        <div class="actions">
+          <button class="btn-primary" id="uploadBtn" disabled>上传</button>
+          <button class="btn-secondary" id="clearBtn">清空</button>
+        </div>
+
+        <div id="status">请先选择文件</div>
+      </div>
+
+      <!-- 记录区 -->
+      <div class="card">
+        <div class="history-head">
+          <div>
+            <h2>最近文件</h2>
+            <p class="desc" style="margin-bottom:0">从后端读取的上传记录</p>
+          </div>
+          <button class="btn-secondary" id="refreshBtn">刷新</button>
+        </div>
+        <div class="history-list" id="historyList">
+          <div class="empty">加载中...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Filecoin Onchain Cloud · 个人测试版</div>
+  </div>
+
+  <script>
+    // ========== 后端地址 ==========
+    const API_BASE = "https://4ka0rek0nl8e9ef6moiali5540.ingress.vpsstorages.com"
+    // ==============================
+
+    const fileInput = document.getElementById("fileInput")
+    const uploadBtn = document.getElementById("uploadBtn")
+    const clearBtn = document.getElementById("clearBtn")
+    const refreshBtn = document.getElementById("refreshBtn")
+    const statusEl = document.getElementById("status")
+    const historyList = document.getElementById("historyList")
+    const dropZone = document.getElementById("dropZone")
+
+    let selectedFile = null
+
+    function formatSize(bytes) {
+      if (!bytes && bytes !== 0) return "-"
+      return (bytes / 1024 / 1024).toFixed(2) + " MB"
+    }
+
+    function setStatus(type, html) {
+      statusEl.className = type || ""
+      statusEl.innerHTML = html
+    }
+
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files && fileInput.files[0]) {
+        selectedFile = fileInput.files[0]
+        setStatus("", `已选择：<b>${selectedFile.name}</b><br>大小：${formatSize(selectedFile.size)}`)
+        uploadBtn.disabled = false
+      }
+    })
+
+    clearBtn.addEventListener("click", () => {
+      selectedFile = null
+      fileInput.value = ""
+      uploadBtn.disabled = true
+      setStatus("", "请先选择文件")
+    })
+
+    // 拖拽
+    ;["dragenter", "dragover"].forEach(evt => {
+      dropZone.addEventListener(evt, e => {
+        e.preventDefault()
+        dropZone.classList.add("dragover")
+      })
+    })
+    ;["dragleave", "drop"].forEach(evt => {
+      dropZone.addEventListener(evt, e => {
+        e.preventDefault()
+        dropZone.classList.remove("dragover")
+      })
+    })
+    dropZone.addEventListener("drop", e => {
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        fileInput.files = e.dataTransfer.files
+        selectedFile = e.dataTransfer.files[0]
+        setStatus("", `已选择：<b>${selectedFile.name}</b><br>大小：${formatSize(selectedFile.size)}`)
+        uploadBtn.disabled = false
+      }
+    })
+
+    uploadBtn.addEventListener("click", async () => {
+      if (!selectedFile) return
+
+      uploadBtn.disabled = true
+      setStatus("loading", "正在上传，请耐心等待…<br>测试网可能需要较长时间")
+
+      const formData = new FormData()
+      formData.append("file", selectedFile)
+
+      try {
+        const res = await fetch(`${API_BASE}/upload`, {
+          method: "POST",
+          body: formData
+        })
+        const data = await res.json()
+
+        if (data.success) {
+          let html = `<b>上传成功</b><br><br>`
+          html += `文件：${data.fileName}<br>`
+          html += `大小：${formatSize(data.size)}<br>`
+          html += `PieceCID：<br><code>${data.pieceCid}</code><br><br>`
+          if (data.links?.explorer) {
+            html += `<a href="${data.links.explorer}" target="_blank">查看存储详情</a>`
+          }
+          if (data.links?.ipfsGateway) {
+            html += ` · <a href="${data.links.ipfsGateway}" target="_blank">IPFS 打开</a>`
+          }
+          setStatus("success", html)
+          loadHistory()
+        } else {
+          setStatus("error", `上传失败：${data.error || "未知错误"}`)
+        }
+      } catch (err) {
+        setStatus(
+          "error",
+          `请求失败：${err.message}<br>可能是测试网太慢或后端暂时无响应`
+        )
+      }
+
+      uploadBtn.disabled = false
+    })
+
+    async function loadHistory() {
+      try {
+        const res = await fetch(`${API_BASE}/uploads?limit=20`)
+        const data = await res.json()
+
+        if (!data.items || data.items.length === 0) {
+          historyList.innerHTML = `<div class="empty">暂无上传记录</div>`
+          return
+        }
+
+        historyList.innerHTML = data.items.map(item => `
+          <div class="item">
+            <div class="name">${item.fileName || "未命名文件"}</div>
+            <div class="meta">${formatSize(item.size)} · ${new Date(item.uploadedAt).toLocaleString()}</div>
+            <div class="cid">${item.pieceCid || "-"}</div>
+            <div class="links">
+              ${item.links?.explorer ? `<a href="${item.links.explorer}" target="_blank">存储详情</a>` : ""}
+              ${item.links?.ipfsGateway ? `<a href="${item.links.ipfsGateway}" target="_blank">IPFS</a>` : ""}
+            </div>
+          </div>
+        `).join("")
+      } catch (err) {
+        historyList.innerHTML = `<div class="empty">加载失败：${err.message}</div>`
+      }
+    }
+
+    refreshBtn.addEventListener("click", loadHistory)
+    loadHistory()
+  </script>
+</body>
+</html>
